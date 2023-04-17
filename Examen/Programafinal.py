@@ -17,15 +17,17 @@ def conectar_db():
 
 def guardar_medicamento():
     conexion = sqlite3.connect("almacen.db")
-    if nombre.get() == "" or descripcion.get() == "" or precio.get() == "" or not imagen:
+    if nombre.get() == "" or descripcion.get() == "" or precio.get() == "":
         messagebox.showerror("Error", "Complete todos los datos por favor")
         return
+    with open(imagen.get(), 'rb') as f:
+        archivo_imagen = f.read()
     print(nombre.get())
     print(descripcion.get())
     int_precio = int(precio.get())
     print(int_precio)
-    print(imagen)
-    conexion.execute("insert into medicamentos(nombre, descripcion, precio, imagen) values (?,?,?,?)", (nombre.get(), descripcion.get(), int_precio, imagen))
+    print(imagen.get())
+    conexion.execute("insert into medicamentos(nombre, descripcion, precio, imagen) values (?,?,?,?)", (nombre.get(), descripcion.get(), int_precio, archivo_imagen))
     conexion.commit()
     conexion.close()
     ventana_nuevo.destroy()
@@ -48,46 +50,9 @@ def actualiza_listado():
     for registro in registros:
         registros_lb.insert(tk.END, registro)
 
-imagen_bytes = None
-
 def abrir_imagen():
-    global imagen_bytes
-    # abrir cuadro de diálogo para seleccionar archivo
-    nombreDeArchivo = filedialog.askopenfilename(initialdir = "/", title="Select a File", filetypes=(("png","*.png*"),("all files","*.*")))
-    
-    # si el usuario selecciona un archivo
-    if nombreDeArchivo:
-        try:
-            # leer archivo y almacenar como bytes en variable imagen_bytes
-            with open(nombreDeArchivo, 'rb') as archivo:
-                imagen_bytes = archivo.read()
-            # mostrar ruta del archivo en etiqueta del botón
-            imagen_entry.configure(text=nombreDeArchivo)
-        except:
-            messagebox.showerror("Error", "No se pudo cargar la imagen")
-            
-def guardar_medicamento():
-    # obtener datos del formulario
-    nombre = nombre_entry.get()
-    descripcion = descripcion_entry.get()
-    precio = precio_entry.get()
-
-    # leer imagen en formato bytes
-    imagen_bytes = None
-    if imagen_path:
-        with open(imagen_path, 'rb') as f:
-            imagen_bytes = f.read()
-
-    # guardar en la base de datos
-    conexion = sqlite3.connect("medicamentos.db")
-    cursor = conexion.cursor()
-    cursor.execute("insert into medicamentos(nombre, descripcion, precio, imagen) values (?,?,?,?)", (nombre, descripcion, precio, imagen_bytes))
-    conexion.commit()
-    conexion.close()
-
-    # mostrar mensaje de éxito
-    messagebox.showinfo("Éxito", "El medicamento se ha guardado correctamente")
-
+    global imagen
+    imagen.set(filedialog.askopenfilename(initialdir = "/", title="Select a File", filetypes=((".png","*.png*"),("all files","*.*"))))
 
 
 def nuevo_medicamento():
@@ -133,8 +98,10 @@ def nuevo_medicamento():
     precio = precio_entry
     precio.configure(width="50")
     global imagen
-    imagen = imagen_entry
-    imagen.configure(width="50")
+    imagen = StringVar()
+    imagen_entry = tk.Button(ventana_nuevo_medicamento, command=abrir_imagen, text="Buscar imagen")
+    imagen_entry.grid(row=3, column=0, columnspan=2, pady=10, padx=10)
+
     global ventana_nuevo
     ventana_nuevo = ventana_nuevo_medicamento
 
